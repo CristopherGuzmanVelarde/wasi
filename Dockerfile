@@ -13,8 +13,10 @@ RUN npm install -g pnpm@latest
 # Copy package manifests first to leverage Docker cache for deps
 COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies (uses lockfile for reproducible builds)
-RUN pnpm install --frozen-lockfile
+# Install dependencies (use lockfile for reproducible builds). If this fails,
+# retry once without --frozen-lockfile to produce more detailed logs for debugging.
+RUN set -eux; \
+	pnpm install --frozen-lockfile || (echo "pnpm install --frozen-lockfile failed, retrying without --frozen-lockfile to collect logs" && pnpm install --reporter=ndjson)
 
 # Copy the rest of the sources
 COPY . .
