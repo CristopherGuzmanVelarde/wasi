@@ -15,7 +15,7 @@ COPY package.json pnpm-lock.yaml ./
 
 # Instalar las dependencias de producción
 # --prod omite las devDependencies que no son necesarias en producción
-RUN pnpm install --prod
+RUN pnpm install
 
 # Copiar el resto de los archivos de configuración y del código fuente
 # Esto incluye next.config.mjs, tsconfig.json, etc.
