@@ -1,0 +1,12 @@
+# Ignorar dependencias y artefactos de compilación locales
+node_modules
+.next
+
+# Ignorar archivos de Docker y Git
+Dockerfile
+.dockerignore
+.git
+.gitignore
+
+# Ignorar configuraciones de IDE
+.vscode
