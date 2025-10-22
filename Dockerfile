@@ -2,58 +2,54 @@
 
 # --- Etapa de Builder ---
 # Esta etapa instala dependencias, compila el código y prepara los artefactos de producción.
-FROM node:20-alpine AS builder
+FROM node:20 AS builder
 
-# Instalar pnpm
-RUN npm install -g pnpm
-
-# Establecer el directorio de trabajo dentro del contenedor
+# Use a non-root working dir
 WORKDIR /app
 
-# Copiar los archivos de manifiesto y bloqueo del paquete
+# Install pnpm globally (pnpm v8+ recommended)
+RUN npm install -g pnpm@latest
+
+# Copy package manifests first to leverage Docker cache for deps
 COPY package.json pnpm-lock.yaml ./
 
-# Instalar las dependencias de producción
-# --prod omite las devDependencies que no son necesarias en producción
-RUN pnpm install
+# Install dependencies (uses lockfile for reproducible builds)
+RUN pnpm install --frozen-lockfile
 
-# Copiar el resto de los archivos de configuración y del código fuente
-# Esto incluye next.config.mjs, tsconfig.json, etc.
+# Copy the rest of the sources
 COPY . .
 
-# Construir la aplicación Next.js para producción
+# Build the app (expects next.config.mjs to set output: 'standalone')
 RUN pnpm build
 
-# --- Etapa de Runner ---
-# Esta etapa crea la imagen final y ligera que ejecutará la aplicación.
-FROM node:20-alpine AS runner
+### Runner image: use Debian-slim for maximum compatibility with Next standalone
+FROM node:20-slim AS runner
 
 WORKDIR /app
 
-# Crear un usuario y grupo no root para mejorar la seguridad
-RUN addgroup --system --gid 1001 nextjs
-RUN adduser --system --uid 1001 nextjs
+# Create non-root user
+RUN groupadd -r nextjs && useradd -r -g nextjs -s /sbin/nologin nextjs
 
-# Copiar los artefactos de compilación de la etapa anterior
-# Copiamos la carpeta .next en modo standalone, que es la salida optimizada
-COPY --from=builder /app/.next/standalone ./
-# Copiamos también los assets estáticos de la carpeta public y .next/static
+# Set NODE_ENV
+ENV NODE_ENV=production
+
+# Copy standalone build output
+# Next.js standalone build creates a folder `.next/standalone/` containing package.json and server.js
+COPY --from=builder /app/.next/standalone/ .
+
+# Copy public assets and static files
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/static ./.next/static
 
+# Ensure files are owned by non-root user
+RUN chown -R nextjs:nextjs /app
 
-# Cambiar la propiedad de los archivos al usuario no root
-RUN chown -R nextjs:nextjs .
-
-# Cambiar al usuario no root
+# Switch to non-root user
 USER nextjs
 
-# Exponer el puerto en el que se ejecuta la aplicación Next.js
+# Expose port and default env
 EXPOSE 3000
+ENV PORT=3000
 
-# Variable de entorno para el puerto
-ENV PORT 3000
-
-# El comando para iniciar el servidor de Next.js en modo producción
-# El entrypoint es server.js dentro de la carpeta .next/standalone
+# Start the Next.js standalone server (server.js is created by Next)
 CMD ["node", "server.js"]
