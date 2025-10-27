@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Send, ExternalLink, CheckCircle, AlertCircle, Loader2, Copy, Check } from "lucide-react"
+import { Send, ExternalLink, CheckCircle, AlertCircle, Loader2, Copy, Check, UserCircle } from "lucide-react"
 import {
   sendTransaction,
   ethToWei,
@@ -16,9 +16,19 @@ import {
   saveTransaction,
   updateTransactionStatus,
   getExplorerTransactionUrl,
+  formatAddress,
   type Transaction,
 } from "@/lib/metamask"
 import type { Language } from "@/lib/i18n"
+
+interface Contact {
+  id: string
+  name: string
+  address: string
+  email?: string
+  note?: string
+  createdAt: number
+}
 
 interface SendTransactionProps {
   currentLanguage: Language
@@ -43,6 +53,9 @@ export function SendTransaction({
   const [copied, setCopied] = useState(false)
   const [chainId, setChainId] = useState<string>("")
   const [networkName, setNetworkName] = useState<string>("")
+  const [contacts, setContacts] = useState<Contact[]>([])
+  const [showContactsDialog, setShowContactsDialog] = useState(false)
+  const [selectedContactName, setSelectedContactName] = useState<string>("")
 
   const handleSend = async () => {
     if (!recipientAddress || !amount) {
@@ -111,6 +124,7 @@ export function SendTransaction({
       // Clear form
       setRecipientAddress("")
       setAmount("")
+      setSelectedContactName("")
     } catch (err: any) {
       setError(err.message || "Transaction failed")
       setTxStatus("failed")
@@ -161,6 +175,26 @@ export function SendTransaction({
     }
   }
 
+  const loadContacts = () => {
+    if (typeof window === "undefined") return
+    
+    const stored = localStorage.getItem("wasi_contacts")
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored)
+        setContacts(parsed)
+      } catch (error) {
+        console.error("Error loading contacts:", error)
+      }
+    }
+  }
+
+  const handleSelectContact = (contact: Contact) => {
+    setRecipientAddress(contact.address)
+    setSelectedContactName(contact.name)
+    setShowContactsDialog(false)
+  }
+
   const quickAmounts = ["0.001", "0.01", "0.05", "0.1"]
 
   return (
@@ -174,16 +208,39 @@ export function SendTransaction({
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="recipient">
-              {currentLanguage === "es" ? "Dirección del Destinatario" : "Recipient Address"}
-            </Label>
+            <div className="flex items-center justify-between mb-2">
+              <Label htmlFor="recipient">
+                {currentLanguage === "es" ? "Dirección del Destinatario" : "Recipient Address"}
+              </Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  loadContacts()
+                  setShowContactsDialog(true)
+                }}
+                className="h-7 text-xs text-purple-600 hover:text-purple-700"
+              >
+                <UserCircle className="h-3 w-3 mr-1" />
+                {currentLanguage === "es" ? "Contactos" : "Contacts"}
+              </Button>
+            </div>
             <Input
               id="recipient"
               value={recipientAddress}
-              onChange={(e) => setRecipientAddress(e.target.value)}
+              onChange={(e) => {
+                setRecipientAddress(e.target.value)
+                setSelectedContactName("")
+              }}
               placeholder="0x..."
               disabled={sending}
             />
+            {selectedContactName && (
+              <p className="text-xs text-purple-600 mt-1 flex items-center gap-1">
+                <UserCircle className="h-3 w-3" />
+                {selectedContactName}
+              </p>
+            )}
           </div>
 
           <div>
@@ -201,7 +258,7 @@ export function SendTransaction({
             />
           </div>
 
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {quickAmounts.map((quickAmount) => (
               <Button
                 key={quickAmount}
@@ -209,6 +266,7 @@ export function SendTransaction({
                 size="sm"
                 onClick={() => setAmount(quickAmount)}
                 disabled={sending}
+                className="text-xs"
               >
                 {quickAmount}
               </Button>
@@ -352,6 +410,68 @@ export function SendTransaction({
 
             <Button onClick={() => setShowSuccessDialog(false)} className="w-full bg-green-600 hover:bg-green-700">
               {currentLanguage === "es" ? "Cerrar" : "Close"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contacts Selector Dialog */}
+      <Dialog open={showContactsDialog} onOpenChange={setShowContactsDialog}>
+        <DialogContent className="max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <UserCircle className="h-6 w-6 text-purple-600" />
+              {currentLanguage === "es" ? "Seleccionar Contacto" : "Select Contact"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 pt-2">
+            {contacts.length === 0 ? (
+              <Card className="bg-gray-50">
+                <CardContent className="p-6 text-center">
+                  <UserCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">
+                    {currentLanguage === "es"
+                      ? "No tienes contactos guardados aún"
+                      : "You don't have any saved contacts yet"}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              contacts.map((contact) => (
+                <Card
+                  key={contact.id}
+                  className="cursor-pointer hover:shadow-md transition-all hover:border-purple-300"
+                  onClick={() => handleSelectContact(contact)}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <UserCircle className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 text-sm">{contact.name}</h3>
+                        <code className="text-xs bg-gray-100 px-2 py-0.5 rounded block truncate mt-1">
+                          {formatAddress(contact.address)}
+                        </code>
+                        {contact.note && (
+                          <p className="text-xs text-gray-600 mt-1 italic">{contact.note}</p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+
+          <div className="pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowContactsDialog(false)}
+              className="w-full"
+            >
+              {currentLanguage === "es" ? "Cancelar" : "Cancel"}
             </Button>
           </div>
         </DialogContent>

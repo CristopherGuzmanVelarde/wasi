@@ -20,6 +20,15 @@ import {
 import { getExplorerTransactionUrl, getExplorerAddressUrl, formatAddress, type Transaction } from "@/lib/metamask"
 import type { Language } from "@/lib/i18n"
 
+interface Contact {
+  id: string
+  name: string
+  address: string
+  email?: string
+  note?: string
+  createdAt: number
+}
+
 interface TransactionDetailsProps {
   transaction: Transaction | null
   open: boolean
@@ -29,6 +38,38 @@ interface TransactionDetailsProps {
 
 export function TransactionDetails({ transaction, open, onClose, currentLanguage }: TransactionDetailsProps) {
   const [copied, setCopied] = useState<string | null>(null)
+  const [contacts, setContacts] = useState<Contact[]>([])
+
+  useEffect(() => {
+    loadContacts()
+  }, [])
+
+  const loadContacts = () => {
+    if (typeof window === "undefined") return
+
+    const stored = localStorage.getItem("wasi_contacts")
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored)
+        setContacts(parsed)
+      } catch (error) {
+        console.error("Error loading contacts:", error)
+      }
+    }
+  }
+
+  const getContactName = (address: string): string | null => {
+    const contact = contacts.find(
+      (c) => c.address.toLowerCase() === address.toLowerCase()
+    )
+    return contact ? contact.name : null
+  }
+
+  const getContactInfo = (address: string): Contact | null => {
+    return contacts.find(
+      (c) => c.address.toLowerCase() === address.toLowerCase()
+    ) || null
+  }
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
@@ -89,9 +130,9 @@ export function TransactionDetails({ transaction, open, onClose, currentLanguage
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto mx-4 w-[calc(100%-2rem)] sm:w-full">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Hash className="h-5 w-5" />
             {currentLanguage === "es" ? "Detalles de Transacción" : "Transaction Details"}
           </DialogTitle>
@@ -130,7 +171,7 @@ export function TransactionDetails({ transaction, open, onClose, currentLanguage
                   {copied === "hash" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                 </Button>
               </div>
-              <code className="text-xs bg-gray-100 p-2 rounded block overflow-x-auto">{transaction.hash}</code>
+              <code className="text-xs bg-gray-100 p-2 rounded block overflow-x-auto break-all">{transaction.hash}</code>
               <Button
                 variant="outline"
                 size="sm"
@@ -161,7 +202,15 @@ export function TransactionDetails({ transaction, open, onClose, currentLanguage
                       {copied === "from" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                     </Button>
                   </div>
-                  <code className="text-xs bg-gray-100 p-2 rounded block overflow-x-auto">{transaction.from}</code>
+                  {getContactName(transaction.from) && (
+                    <div className="mb-2 p-2 bg-purple-50 rounded border border-purple-200">
+                      <p className="text-sm font-medium text-purple-900">{getContactName(transaction.from)}</p>
+                      {getContactInfo(transaction.from)?.email && (
+                        <p className="text-xs text-purple-700">{getContactInfo(transaction.from)?.email}</p>
+                      )}
+                    </div>
+                  )}
+                  <code className="text-xs bg-gray-100 p-2 rounded block overflow-x-auto break-all">{transaction.from}</code>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -189,7 +238,15 @@ export function TransactionDetails({ transaction, open, onClose, currentLanguage
                       {copied === "to" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                     </Button>
                   </div>
-                  <code className="text-xs bg-gray-100 p-2 rounded block overflow-x-auto">{transaction.to}</code>
+                  {getContactName(transaction.to) && (
+                    <div className="mb-2 p-2 bg-purple-50 rounded border border-purple-200">
+                      <p className="text-sm font-medium text-purple-900">{getContactName(transaction.to)}</p>
+                      {getContactInfo(transaction.to)?.email && (
+                        <p className="text-xs text-purple-700">{getContactInfo(transaction.to)?.email}</p>
+                      )}
+                    </div>
+                  )}
+                  <code className="text-xs bg-gray-100 p-2 rounded block overflow-x-auto break-all">{transaction.to}</code>
                   <Button
                     variant="ghost"
                     size="sm"

@@ -102,14 +102,14 @@ export function PaymentModule({ isOnline, t, currentLanguage, currency, walletAd
                 />
               </div>
 
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {quickAmounts.map((quickAmount) => (
                   <Button
                     key={quickAmount}
                     variant="outline"
                     size="sm"
                     onClick={() => handleQuickPayment(quickAmount)}
-                    className="bg-transparent"
+                    className="bg-transparent text-xs"
                   >
                     {currency === "S/" ? `S/${quickAmount}` : `${quickAmount}`}
                   </Button>

@@ -262,9 +262,9 @@ export function ReceivePayment({ currentLanguage, userName, userPhone, currency 
 
             {/* Action Buttons */}
             <div className="grid grid-cols-3 gap-2">
-              <Button variant="outline" size="sm" onClick={copyQRInfo} className="bg-white">
-                <Copy className="h-3 w-3 mr-1" />
-                <span className="text-xs">
+              <Button variant="outline" size="sm" onClick={copyQRInfo} className="bg-white flex-col h-auto py-2 px-1">
+                <Copy className="h-3 w-3 mb-1" />
+                <span className="text-[10px] leading-tight">
                   {currentLanguage === "qu"
                     ? "Copiay"
                     : currentLanguage === "ay"
@@ -276,9 +276,9 @@ export function ReceivePayment({ currentLanguage, userName, userPhone, currency 
                           : "Copiar"}
                 </span>
               </Button>
-              <Button variant="outline" size="sm" onClick={shareQR} className="bg-white">
-                <Share className="h-3 w-3 mr-1" />
-                <span className="text-xs">
+              <Button variant="outline" size="sm" onClick={shareQR} className="bg-white flex-col h-auto py-2 px-1">
+                <Share className="h-3 w-3 mb-1" />
+                <span className="text-[10px] leading-tight">
                   {currentLanguage === "qu"
                     ? "Rakiy"
                     : currentLanguage === "ay"
@@ -290,9 +290,9 @@ export function ReceivePayment({ currentLanguage, userName, userPhone, currency 
                           : "Compartir"}
                 </span>
               </Button>
-              <Button variant="outline" size="sm" onClick={downloadQR} className="bg-white">
-                <Download className="h-3 w-3 mr-1" />
-                <span className="text-xs">
+              <Button variant="outline" size="sm" onClick={downloadQR} className="bg-white flex-col h-auto py-2 px-1">
+                <Download className="h-3 w-3 mb-1" />
+                <span className="text-[10px] leading-tight">
                   {currentLanguage === "qu"
                     ? "Chaskiy"
                     : currentLanguage === "ay"

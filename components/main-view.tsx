@@ -16,6 +16,7 @@ import { LocalMarketplace } from "@/components/local-marketplace"
 import { UserQRCode } from "@/components/user-qr-code"
 import { BackpackMode } from "@/components/backpack-mode"
 import { LoansModule } from "@/components/loans-module"
+import { Contacts } from "@/components/contacts"
 
 interface MainViewProps {
   currentView: string
@@ -124,6 +125,12 @@ export function MainView({
             }}
           />
         )
+
+      case "contacts":
+        return <Contacts currentLanguage={currentLanguage} onSendToContact={(address, name) => {
+          // This will be handled by switching to payments view with pre-filled data
+          console.log("Send to contact:", address, name)
+        }} />
 
       case "loans":
         return <LoansModule currentLanguage={currentLanguage} currency={currency} />

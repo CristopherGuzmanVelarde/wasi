@@ -28,18 +28,50 @@ interface MockTransaction {
   concept: string
 }
 
+interface Contact {
+  id: string
+  name: string
+  address: string
+  email?: string
+  note?: string
+  createdAt: number
+}
+
 export function TransactionHistory({ currentLanguage, currency, isMetaMaskLogin, walletAddress }: TransactionHistoryProps) {
   const t = useTranslation(currentLanguage)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [currentChainId, setCurrentChainId] = useState<string>("")
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [showDetails, setShowDetails] = useState(false)
+  const [contacts, setContacts] = useState<Contact[]>([])
 
   useEffect(() => {
+    loadContacts()
     if (isMetaMaskLogin) {
       loadTransactions()
     }
   }, [isMetaMaskLogin])
+
+  const loadContacts = () => {
+    if (typeof window === "undefined") return
+    
+    const stored = localStorage.getItem("wasi_contacts")
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored)
+        setContacts(parsed)
+      } catch (error) {
+        console.error("Error loading contacts:", error)
+      }
+    }
+  }
+
+  const getContactName = (address: string): string | null => {
+    const contact = contacts.find(
+      (c) => c.address.toLowerCase() === address.toLowerCase()
+    )
+    return contact ? contact.name : null
+  }
 
   const loadTransactions = async () => {
     const networkResult = await getCurrentNetwork()
@@ -222,9 +254,20 @@ export function TransactionHistory({ currentLanguage, currency, isMetaMaskLogin,
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between mb-1">
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm text-gray-800 truncate">
-                              {currentLanguage === "es" ? "Para:" : "To:"} {formatAddress(transaction.to)}
-                            </p>
+                            {getContactName(transaction.to) ? (
+                              <>
+                                <p className="font-medium text-sm text-gray-800 truncate">
+                                  {getContactName(transaction.to)}
+                                </p>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {formatAddress(transaction.to)}
+                                </p>
+                              </>
+                            ) : (
+                              <p className="font-medium text-sm text-gray-800 truncate">
+                                {currentLanguage === "es" ? "Para:" : "To:"} {formatAddress(transaction.to)}
+                              </p>
+                            )}
                             <p className="text-xs text-gray-500">{transaction.networkName}</p>
                           </div>
                           <div className="text-right ml-2">

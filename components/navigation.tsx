@@ -20,6 +20,7 @@ import {
   Shield,
   Backpack,
   HandHeart,
+  UserCircle,
 } from "lucide-react"
 import { type Language, useTranslation } from "@/lib/i18n"
 import { useState } from "react"
@@ -76,10 +77,10 @@ export function Navigation({
       showInBottomNav: true,
     },
     {
-      id: "education",
-      label: t.education,
-      icon: BookOpen,
-      color: "text-orange-600",
+      id: "contacts",
+      label: currentLanguage === "es" ? "Contactos" : "Contacts",
+      icon: UserCircle,
+      color: "text-purple-600",
       showInBottomNav: true,
     },
     {
@@ -88,6 +89,13 @@ export function Navigation({
       icon: History,
       color: "text-gray-600",
       showInBottomNav: true,
+    },
+    {
+      id: "education",
+      label: t.education,
+      icon: BookOpen,
+      color: "text-orange-600",
+      showInBottomNav: false,
     },
     {
       id: "backpack",
