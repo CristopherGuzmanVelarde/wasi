@@ -158,7 +158,7 @@ export function LandingPage({
     {
       name: "Favio Huamán",
       role: t.role2,
-      image: "/developer-working.png",
+      image: "https://images4.imagebam.com/ff/d2/8b/ME179A9O_o.PNG",
       github: "https://github.com/FaviohuamanVG",
       linkedin: "https://linkedin.com",
       email: "favio@wasi.pe",
